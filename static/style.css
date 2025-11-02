@@ -1,0 +1,240 @@
+/* ===========================
+   GLOBAL STYLES
+=========================== */
+body {
+  font-family: "Poppins", sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+/* ===========================
+   NAVBAR
+=========================== */
+.navbar {
+  background: linear-gradient(90deg, #0b9444, #1cb95e);
+  padding: 0.8rem 1.5rem;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: #fff !important;
+}
+
+.nav-link {
+  color: #e9f9ee !important;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #fff !important;
+}
+
+.navbar .btn {
+  background-color: #fff;
+  color: #0b9444;
+  font-weight: 600;
+  border: none;
+  border-radius: 30px;
+  padding: 0.4rem 1rem;
+  transition: 0.3s;
+}
+
+.navbar .btn:hover {
+  background-color: #e6ffee;
+}
+
+/* ===========================
+   HERO SECTION
+=========================== */
+.hero {
+  background: url('https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1350&q=80') center/cover no-repeat;
+  color: #fff;
+  text-align: center;
+  padding: 7rem 1rem;
+  position: relative;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  font-weight: 700;
+}
+
+.hero p {
+  font-size: 1.2rem;
+  margin-top: 1rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ===========================
+   FEATURES SECTION
+=========================== */
+.features {
+  padding: 4rem 1rem;
+  background-color: #fff;
+}
+
+.features h2 {
+  text-align: center;
+  margin-bottom: 3rem;
+  color: #0b9444;
+  font-weight: 600;
+}
+
+.feature-card {
+  background-color: #f9fffa;
+  border: 1px solid #e2f0e8;
+  border-radius: 15px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
+}
+
+.feature-card i {
+  font-size: 2.5rem;
+  color: #1cb95e;
+  margin-bottom: 1rem;
+}
+
+.feature-card h5 {
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.feature-card p {
+  font-size: 0.95rem;
+  color: #666;
+}
+
+/* ===========================
+   FOOTER
+=========================== */
+footer {
+  background-color: #0b9444;
+  color: #e9f9ee;
+  text-align: center;
+  padding: 1.2rem 0;
+  margin-top: 3rem;
+  font-size: 0.95rem;
+}
+
+/* ===========================
+   MODALS
+=========================== */
+.modal-content {
+  border-radius: 20px;
+  border: none;
+}
+
+.modal-header {
+  background-color: #0b9444;
+  color: #fff;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+
+.modal-footer .btn {
+  border-radius: 30px;
+}
+
+.btn-green {
+  background-color: #0b9444;
+  color: #fff;
+  border: none;
+  transition: 0.3s;
+}
+
+.btn-green:hover {
+  background-color: #1cb95e;
+}
+
+/* ===========================
+   BREADCRUMB
+=========================== */
+.breadcrumb {
+  background: none;
+  margin: 1rem 0;
+}
+
+.breadcrumb-item a {
+  color: #0b9444;
+  text-decoration: none;
+}
+
+.breadcrumb-item.active {
+  color: #666;
+}
+
+/* 🌿 Activity Entry Page Styles */
+.activity-entry-page {
+    background: linear-gradient(120deg, #e8f5e9, #f1f8f6);
+    min-height: 90vh;
+}
+
+.activity-form {
+    background-color: #ffffff;
+    border-radius: 16px;
+    transition: all 0.3s ease;
+}
+
+.activity-form:hover {
+    box-shadow: 0 0 25px rgba(60, 179, 113, 0.2);
+}
+
+.activity-form label {
+    color: #2e7d32;
+}
+
+.activity-form input,
+.activity-form select,
+.activity-form textarea {
+    border: 1px solid #c8e6c9;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.activity-form input:focus,
+.activity-form select:focus,
+.activity-form textarea:focus {
+    border-color: #66bb6a;
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.2);
+}
+
+.breadcrumb {
+    background: none;
+    font-weight: 500;
+}
+
+.breadcrumb-item a {
+    color: #388e3c;
+    text-decoration: none;
+}
+
+.breadcrumb-item.active {
+    color: #2e7d32;
+}

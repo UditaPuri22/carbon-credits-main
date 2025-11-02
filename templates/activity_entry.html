@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Activity Entry</li>
+        </ol>
+    </nav>
+
+    <h2 class="mb-4 text-success">Log a New Activity</h2>
+    {% if message %}
+  <div class="alert alert-success" role="alert">
+    {{ message }}
+  </div>
+  {% endif %}
+    <form method="POST" action="{{ url_for('activity_entry') }}" class="row g-3 shadow p-4 rounded bg-light">
+        <div class="col-md-6">
+            <label for="activity_type" class="form-label">Activity Type</label>
+            <select name="activity_type" id="activity_type" class="form-select" required>
+                <option value="">Select an activity</option>
+                <option value="Car Travel">Car Travel</option>
+                <option value="Flight">Flight</option>
+                <option value="Electricity Usage">Electricity Usage</option>
+                <option value="Tree Plantation">Tree Plantation</option>
+                <option value="Public Transport">Public Transport</option>
+            </select>
+        </div>
+
+        <div class="col-md-6">
+            <label for="amount" class="form-label">Amount</label>
+            <input type="number" step="0.01" name="amount" id="amount" class="form-control" placeholder="e.g. 20" required>
+        </div>
+
+        <div class="col-md-6">
+            <label for="unit" class="form-label">Unit</label>
+            <select name="unit" id="unit" class="form-select" required>
+                <option value="km">km</option>
+                <option value="kWh">kWh</option>
+                <option value="trees">trees</option>
+                <option value="liters">liters</option>
+            </select>
+        </div>
+
+        <div class="col-md-6">
+            <label for="date" class="form-label">Date</label>
+            <input type="date" name="date" id="date" class="form-control" required>
+        </div>
+
+        <div class="col-12">
+            <label for="description" class="form-label">Description (optional)</label>
+            <textarea name="description" id="description" class="form-control" rows="2"></textarea>
+        </div>
+
+        <div class="col-12 text-end">
+            <button type="submit" class="btn btn-success px-4">Save Activity</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2 class="text-center mb-4">Create a New Listing</h2>
+
+  {% if message %}
+    <div class="alert alert-info text-center">{{ message }}</div>
+  {% endif %}
+
+  <form method="POST" class="mt-4">
+    <h5 class="text-center mb-3">List Your Credits</h5>
+
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label>Credits to Sell</label>
+          <input type="number" step="0.01" name="credits" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label>Price per Credit</label>
+          <input type="number" step="0.01" name="price_per_credit" class="form-control" required>
+        </div>
+
+        <div class="text-center mt-3 d-flex justify-content-center gap-3">
+          <button type="submit" class="btn btn-success px-4">List on Marketplace</button>
+          <a href="{{ url_for('marketplace') }}" class="btn btn-secondary px-4">Back to Marketplace</a>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

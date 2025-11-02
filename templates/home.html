@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Home | Carbon Credits Management System{% endblock %}
+{% if current_user.is_authenticated %}
+  <script>
+    window.location.href = "{{ url_for('dashboard') }}";
+  </script>
+{% endif %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-center text-white d-flex flex-column justify-content-center align-items-center" style="background: linear-gradient(to right, #2e8b57, #3cb371); height: 80vh;">
+    <div class="container">
+        <h1 class="display-4 fw-bold mb-3">Empowering a Greener Future</h1>
+        <p class="lead mb-4">Calculate, Offset, and Trade Carbon Credits with Ease</p>
+
+        {% if current_user.is_authenticated %}
+    <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg">Go to Dashboard</a>
+{% endif %}
+
+
+    </div>
+</section>
+
+
+<!-- Features Section -->
+<section id="features" class="features-section py-5 bg-light">
+    <div class="container text-center">
+        <h2 class="mb-5 fw-bold text-success">Our Key Features</h2>
+        <div class="row g-4">
+            <div class="col-md-3">
+    <div class="card border-0 shadow-sm p-4 h-100">
+        <i class="fas fa-list fa-3x text-success mb-3"></i>
+        <h5 class="fw-bold">Activity Entry</h5>
+        <p>Record your daily actions that impact your carbon footprint.</p>
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('activity_entry') }}" class="btn btn-outline-success mt-2">Add Activity</a>
+        {% else %}
+            <button class="btn btn-outline-success mt-2" data-bs-toggle="modal" data-bs-target="#loginModal">
+                Login to Add
+            </button>
+        {% endif %}
+    </div>
+</div>
+
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm p-4 h-100">
+                    <i class="fas fa-calculator fa-3x text-success mb-3"></i>
+    <h4>Emission Calculation</h4>
+    <p>Calculate your carbon emissions for a specific date and compare them with your available credits.</p>
+    <a href="{{ url_for('emission_calculation') }}" class="btn btn-outline-success mt-2">Calculate Now</a>
+
+
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm p-4 h-100">
+                    <i class="fas fa-store fa-3x text-success mb-3"></i>
+                    <h5 class="fw-bold">Marketplace</h5>
+                    <p>Buy and sell verified carbon credits securely and transparently.</p>
+                    <a href="{{ url_for('marketplace') }}" class="btn btn-outline-success">Go to Marketplace</a>
+
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm p-4 h-100">
+                    <i class="fas fa-leaf fa-3x text-success mb-3"></i>
+                    <h5 class="fw-bold">Offset Program</h5>
+                    <p>Invest in sustainable projects to balance your emissions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section id="how" class="how-it-works py-5">
+    <div class="container text-center">
+        <h2 class="mb-5 fw-bold text-success">How It Works</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="p-4 border rounded h-100 shadow-sm">
+                    <i class="fas fa-pencil-alt fa-2x text-success mb-3"></i>
+                    <h5>Step 1: Log Activities</h5>
+                    <p>Record your energy use, travel, and other emission sources.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 border rounded h-100 shadow-sm">
+                    <i class="fas fa-chart-line fa-2x text-success mb-3"></i>
+                    <h5>Step 2: Calculate Emissions</h5>
+                    <p>Get an accurate estimate of your carbon footprint.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 border rounded h-100 shadow-sm">
+                    <i class="fas fa-hand-holding-heart fa-2x text-success mb-3"></i>
+                    <h5>Step 3: Offset & Earn</h5>
+                    <p>Offset your emissions through verified green initiatives.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-dark text-white text-center py-4">
+    <div class="container">
+        <p class="mb-1">© 2025 Carbon Credits Management System</p>
+        <small>Made with 🌿 for a sustainable planet</small>
+    </div>
+</footer>
+{% endblock %}

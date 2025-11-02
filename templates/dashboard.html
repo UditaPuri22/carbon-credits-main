@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container mt-4">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb bg-light p-3 rounded shadow-sm">
+      <li class="breadcrumb-item">
+        <a href="{{ url_for('home') }}" class="text-success text-decoration-none">Home</a>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+    </ol>
+  </nav>
+</div>
+
+  <h1>Welcome, {{ current_user.username }}!</h1>
+  <p>You are now logged in to the Carbon Credit Management System.</p>
+  <p><strong>Your Available Credits:</strong> {{ current_user.credits }} kg CO₂</p>
+  <p><strong>Carbon Credits:</strong> {{ credits }}</p>
+<p><strong>Wallet Balance:</strong> ₹{{ current_user.wallet_balance }}</p>
+
+
+
+  <a href="{{ url_for('logout') }}">Logout</a>
+</body>
+</html>

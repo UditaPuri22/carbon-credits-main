@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container text-center mt-5">
+  <h2 class="text-success mb-3">Purchase Successful!</h2>
+
+  <p>You bought <strong>{{ listing.credits }}</strong> credits for 
+     <strong>₹{{ listing.total_price }}</strong> 
+     (₹{{ listing.price_per_credit }} each).</p>
+
+  <hr class="my-4">
+
+  <h5>Your Updated Balances:</h5>
+  <p>💰 Wallet Balance: <strong>₹{{ "%.2f" | format(buyer.wallet_balance) }}</strong></p>
+  <p>🌿 Total Credits: <strong>{{ "%.2f" | format(buyer.credits) }}</strong></p>
+
+  <hr class="my-4">
+
+  <h5>Seller Info:</h5>
+  <p><strong>{{ seller.username }}</strong> received ₹{{ "%.2f" | format(listing.total_price) }}</p>
+
+  <a href="{{ url_for('marketplace') }}" class="btn btn-primary mt-3">Back to Marketplace</a>
+  <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary mt-3">Go to Dashboard</a>
+</div>
+{% endblock %}
