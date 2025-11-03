@@ -58,11 +58,9 @@ def register():
     db.session.add(new_user)
     db.session.commit()
 
-    # Auto login after signup
     login_user(new_user)
     flash(f"Welcome, {username}! Your account has been created successfully.", "success")
 
-    # ✅ Redirect directly to dashboard (no JSON)
     return redirect(url_for("dashboard"))
 
 # Dashboard route
@@ -81,7 +79,7 @@ def dashboard():
 @app.route("/activity", methods=["GET", "POST"])
 @login_required
 def activity_entry():
-    message = request.args.get("message")  # get success message from redirect
+    message = request.args.get("message")  
 
     if request.method == "POST":
         activity_type = request.form["activity_type"]
@@ -102,12 +100,12 @@ def activity_entry():
         db.session.add(new_activity)
         db.session.commit()
 
-        # success message with date
+       
         msg = f"Activity added successfully for {date_str}!"
-        # redirect with message in URL
+      
         return redirect(url_for('activity_entry', message=msg))
     
-    # render normally (GET) with message if available
+   
     return render_template('activity_entry.html', message=message)
 
 @app.route("/emission", methods=["GET", "POST"])
@@ -123,7 +121,7 @@ def emission_calculation():
         else:
             date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
 
-            # Check if emission for this date already exists
+            
             existing_record = EmissionRecord.query.filter_by(
                 user_id=current_user.id, date=date_obj
             ).first()
@@ -136,7 +134,7 @@ def emission_calculation():
                     f"Remaining credits: {current_user.credits:.2f}"
                 )
             else:
-                # Fetch activities for that date
+               
                 activities = Activity.query.filter_by(
                     user_id=current_user.id, date=date_obj
                 ).all()
@@ -157,12 +155,12 @@ def emission_calculation():
                         factor = emission_factors.get(act.activity_type, 0.1)
                         daily_emission += float(act.amount) * factor
 
-                    # Deduct emission from user's credits only once
+                   
                     current_user.credits -= daily_emission
                     if current_user.credits < 0:
                         current_user.credits = 0
 
-                    # Store record
+                   
                     new_record = EmissionRecord(
                         user_id=current_user.id,
                         date=date_obj,
@@ -184,13 +182,13 @@ def emission_calculation():
 @app.route("/marketplace")
 @login_required
 def marketplace():
-    # Show all available listings except those owned by the current user
+   
     listings = MarketplaceListing.query.filter(
         MarketplaceListing.status == "available",
         MarketplaceListing.user_id != current_user.id
     ).all()
 
-    # Show user's own listings separately (both sold and available)
+   
     user_listings = MarketplaceListing.query.filter_by(user_id=current_user.id).all()
 
     return render_template("marketplace.html", listings=listings, user_listings=user_listings)
@@ -221,7 +219,7 @@ def create_listing():
             db.session.commit()
 
             flash("Listing created successfully!", "success")
-            # ✅ redirect directly to marketplace after successful listing
+           
             return redirect(url_for("marketplace"))
 
     return render_template("create_listing.html", message=msg, success=success)
@@ -232,35 +230,35 @@ def create_listing():
 def buy_credits(listing_id):
     listing = MarketplaceListing.query.get_or_404(listing_id)
 
-    # Prevent user from buying their own listing
+   
     if listing.user_id == current_user.id:
         flash("You cannot buy your own listing!", "warning")
         return redirect(url_for("marketplace"))
 
-    # Prevent buying already sold listings
+  
     if listing.status == "sold":
         flash("This listing is already sold!", "danger")
         return redirect(url_for("marketplace"))
 
     seller = User.query.get(listing.user_id)
 
-    # Check if buyer has enough money in wallet
+   
     if current_user.wallet_balance < listing.total_price:
         flash("You don’t have enough balance in your wallet!", "danger")
         return redirect(url_for("marketplace"))
 
     # --- Perform transaction ---
-    # Buyer pays
+    
     current_user.wallet_balance -= listing.total_price
     current_user.credits += listing.credits
 
-    # Seller receives money
+   
     seller.wallet_balance += listing.total_price
 
-    # Mark listing as sold
+   
     listing.status = "sold"
 
-    # Record transaction
+   
     transaction = Transaction(
         buyer_id=current_user.id,
         seller_id=seller.id,
