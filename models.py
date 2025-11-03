@@ -4,7 +4,7 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-# --- User Model ---
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -13,7 +13,6 @@ class User(db.Model, UserMixin):
     wallet_balance = db.Column(db.Float, default=5000.0)
 
 
-# --- Activity Model ---
 class Activity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
