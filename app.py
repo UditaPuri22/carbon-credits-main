@@ -373,7 +373,7 @@ def offset():
             # Deduct credits from user
             user.credits -= credits_required
 
-                       new_offset = OffsetTransaction(
+            new_offset = OffsetTransaction(
                 user_id=user.id,
                 program_id=program.id,
                 co2_offset=co2_amount,
