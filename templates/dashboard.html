@@ -1,30 +1,142 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-  <div class="container mt-4">
-  <nav aria-label="breadcrumb">
-    <ol class="breadcrumb bg-light p-3 rounded shadow-sm">
-      <li class="breadcrumb-item">
-        <a href="{{ url_for('home') }}" class="text-success text-decoration-none">Home</a>
-      </li>
-      <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
-    </ol>
-  </nav>
+{% extends "base.html" %}
+{% block title %}Dashboard | Carbon Credits{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-success mb-4">{{ user.username }}'s Dashboard</h1>
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+        </ol>
+    </nav>
+
+    <div class="dashboard-container">
+        
+        <!-- USER PROFILE SECTION -->
+        <section class="profile-card mb-5">
+            <div class="card shadow-sm border-0 p-4">
+                <h4 class="fw-bold text-success">👤 Profile Overview</h4>
+                <p><strong>Wallet Balance:</strong> ₹{{ "%.2f"|format(user.wallet_balance) }}</p>
+                <p><strong>Carbon Credits:</strong> {{ "%.2f"|format(user.credits) }}</p>
+            </div>
+        </section>
+
+        <!-- EMISSION GRAPH SECTION -->
+        <section class="graph-section mb-5">
+            <div class="card shadow-sm border-0 p-4">
+                <h4 class="fw-bold text-success mb-3">📊 Emission Overview</h4>
+                {% if emission_data %}
+                    <canvas id="emissionChart"></canvas>
+                {% else %}
+                    <p class="text-muted">No emission data recorded yet.</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- MARKETPLACE TRANSACTIONS -->
+        <section class="table-section mb-5">
+            <div class="card shadow-sm border-0 p-4">
+                <h4 class="fw-bold text-success mb-3">🛒 Marketplace Transactions</h4>
+                {% if marketplace_transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-success">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Details</th>
+                                    <th>Credits Bought</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for t in marketplace_transactions %}
+                                <tr>
+                                    <td>{{ t.date }}</td>
+                                    <td>{{ t.program_name }}</td>
+                                    <td>{{ t.credits_used }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No marketplace transactions yet.</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- OFFSET TRANSACTIONS -->
+        <section class="table-section mb-5">
+            <div class="card shadow-sm border-0 p-4">
+                <h4 class="fw-bold text-success mb-3">🌱 Offset Transactions</h4>
+                {% if offset_transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-success">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Program</th>
+                                    <th>CO₂ Offset (kg)</th>
+                                    <th>Credits Used</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for o in offset_transactions %}
+                                <tr>
+                                    <td>{{ o.date }}</td>
+                                    <td>{{ o.program_name }}</td>
+                                    <td>{{ o.co2_offset }}</td>
+                                    <td>{{ o.credits_spent }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No offset transactions recorded yet.</p>
+                {% endif %}
+            </div>
+        </section>
+    </div>
 </div>
 
-  <h1>Welcome, {{ current_user.username }}!</h1>
-  <p>You are now logged in to the Carbon Credit Management System.</p>
-  <p><strong>Your Available Credits:</strong> {{ current_user.credits }} kg CO₂</p>
-  <p><strong>Carbon Credits:</strong> {{ credits }}</p>
-<p><strong>Wallet Balance:</strong> ₹{{ current_user.wallet_balance }}</p>
+<!-- CHART.JS SCRIPT -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    {% if emission_data %}
+    const ctx = document.getElementById('emissionChart').getContext('2d');
+    const emissionChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ emission_data | map(attribute='date') | list | tojson }},
+            datasets: [{
+                label: 'Daily Emissions (kg CO₂)',
+                data: {{ emission_data | map(attribute='amount') | list | tojson }},
+                borderColor: '#4CAF50',
+                backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    title: { display: true, text: 'Date' }
+                },
+                y: {
+                    title: { display: true, text: 'CO₂ Emissions (kg)' },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    {% endif %}
+</script>
 
-
-
-  <a href="{{ url_for('logout') }}">Logout</a>
-</body>
-</html>
+{% endblock %}

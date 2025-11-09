@@ -12,6 +12,10 @@ class User(db.Model, UserMixin):
     credits = db.Column(db.Float, default=1000.0)  
     wallet_balance = db.Column(db.Float, default=5000.0)
 
+class EmissionFactor(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    activity_type = db.Column(db.String(100), unique=True, nullable=False)
+    factor = db.Column(db.Float, nullable=False)  # kg CO₂ per unit
 
 class Activity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -53,3 +57,24 @@ class Transaction(db.Model):
 
     buyer = db.relationship("User", foreign_keys=[buyer_id], backref="purchases")
     seller = db.relationship("User", foreign_keys=[seller_id], backref="sales")
+    
+class OffsetProgram(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    rate_per_kg = db.Column(db.Float, nullable=False)  # credits required per kg CO2
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    image = db.Column(db.String(200), nullable=True) 
+
+
+class OffsetTransaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    program_id = db.Column(db.Integer, db.ForeignKey("offset_program.id"), nullable=False)
+    co2_offset = db.Column(db.Float, nullable=False)
+    credits_used = db.Column(db.Float, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship("User", backref="offset_transactions")
+    program = db.relationship("OffsetProgram", backref="transactions")
+
