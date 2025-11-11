@@ -5,7 +5,7 @@
 <div class="container my-5">
     <h1 class="text-success mb-4">{{ user.username }}'s Dashboard</h1>
 
-    <!-- Breadcrumb -->
+
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
@@ -15,7 +15,7 @@
 
     <div class="dashboard-container">
         
-        <!-- USER PROFILE SECTION -->
+       
         <section class="profile-card mb-5">
             <div class="card shadow-sm border-0 p-4">
                 <h4 class="fw-bold text-success">👤 Profile Overview</h4>
@@ -24,7 +24,7 @@
             </div>
         </section>
 
-        <!-- EMISSION GRAPH SECTION -->
+       
         <section class="graph-section mb-5">
             <div class="card shadow-sm border-0 p-4">
                 <h4 class="fw-bold text-success mb-3">📊 Emission Overview</h4>
@@ -36,7 +36,6 @@
             </div>
         </section>
 
-        <!-- MARKETPLACE TRANSACTIONS -->
         <section class="table-section mb-5">
             <div class="card shadow-sm border-0 p-4">
                 <h4 class="fw-bold text-success mb-3">🛒 Marketplace Transactions</h4>
@@ -67,7 +66,7 @@
             </div>
         </section>
 
-        <!-- OFFSET TRANSACTIONS -->
+        
         <section class="table-section mb-5">
             <div class="card shadow-sm border-0 p-4">
                 <h4 class="fw-bold text-success mb-3">🌱 Offset Transactions</h4>
@@ -102,7 +101,7 @@
     </div>
 </div>
 
-<!-- CHART.JS SCRIPT -->
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     {% if emission_data %}

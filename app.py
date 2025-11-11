@@ -36,7 +36,7 @@ def login():
     user = User.query.filter_by(username=username).first()
 
     if not user:
-        # User doesn't exist
+       
         return render_template("home.html", message="User does not exist", open_login=True)
     elif not check_password_hash(user.password, password):
         return render_template("home.html", message="Invalid username or password", open_login=True)
@@ -62,10 +62,9 @@ def register():
     db.session.commit()
 
     login_user(new_user)
-
     return redirect(url_for("dashboard"))
 
-# Dashboard route
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -73,18 +72,18 @@ def dashboard():
 
     
     emission_records = (
-        db.session.query(Activity.date, func.sum(Activity.amount))
-        .filter(Activity.user_id == user.id)
-        .group_by(Activity.date)
-        .order_by(Activity.date.asc())
-        .all()
-    )
+    db.session.query(EmissionRecord.date, func.sum(EmissionRecord.emission_value))
+    .filter(EmissionRecord.user_id == user.id)
+    .group_by(EmissionRecord.date)
+    .order_by(EmissionRecord.date.asc())
+    .all()
+)
     emission_data = [
         {"date": e[0].strftime("%Y-%m-%d"), "amount": round(e[1], 2)}
         for e in emission_records
-    ]
+]
 
-   
+    
     marketplace_transactions = (
         db.session.query(Transaction, User.username)
         .join(User, Transaction.seller_id == User.id)
@@ -139,9 +138,7 @@ from datetime import datetime
 @app.route('/activity_entry', methods=['GET', 'POST'])
 @login_required
 def activity_entry():
-
     message = None
-
 
     if request.method == 'POST':
         activity_type = request.form.get('activity_type')
@@ -151,35 +148,40 @@ def activity_entry():
         date_str = request.form.get('date')
         date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.utcnow().date()
 
-        
-        factor = EmissionFactor.query.filter_by(activity_type=activity_type).first()
-        if not factor:
-            message = f"No emission factor found for {activity_type}."
-        else:
-            emission = amount * factor.factor  # kg CO₂ emitted
+        # Fetch factor
+        factor_record = EmissionFactor.query.filter_by(activity_type=activity_type).first()
+        factor = factor_record.factor if factor_record else 0.1
+        emission = amount * factor
 
-           
-            activity = Activity(
-                user_id=current_user.id,
-                activity_type=activity_type,
-                description=description,
-                amount=amount,
-                unit=unit,
-                date=date
+        current_user.credits -= emission
+        if current_user.credits < 0:
+            current_user.credits = 0
+        db.session.add(current_user)
+
+        activity = Activity(
+            user_id=current_user.id,
+            activity_type=activity_type,
+            description=description,
+            amount=amount,
+            unit=unit,
+            date=date
+        )
+        db.session.add(activity)
+
+        emission_record = EmissionRecord(
+            user_id=current_user.id,
+            date=date,
+            emission_value=emission
+        )
+        db.session.add(emission_record)
+
+        db.session.commit()
+
+        message = (
+                f"Activity added for {date.strftime('%Y-%m-%d')}. "
+                f"{emission:.2f} credits deducted. "
+                f"Remaining credits: {current_user.credits:.2f}"
             )
-            db.session.add(activity)
-
-            
-            emission_record = EmissionRecord(
-                user_id=current_user.id,
-                date=date,
-                emission_value=emission
-            )
-            db.session.add(emission_record)
-            db.session.commit()
-
-            message = f"Activity for {date.strftime('%Y-%m-%d')} added successfully."
-
 
     return render_template('activity_entry.html', message=message)
 
@@ -223,8 +225,6 @@ def emission_calculation():
                         "Car Travel": 0.12,
                         "Flight": 0.25,
                         "Electricity Usage": 0.85,
-                        "Bus Travel": 0.06,
-                        "Bike Travel": 0.02
                     }
 
                     daily_emission = 0
@@ -232,12 +232,15 @@ def emission_calculation():
                         factor = emission_factors.get(act.activity_type, 0.1)
                         daily_emission += float(act.amount) * factor
 
-                   
+                    
                     current_user.credits -= daily_emission
                     if current_user.credits < 0:
                         current_user.credits = 0
+                    db.session.add(current_user)
+                    db.session.commit()
 
-                   
+
+                    # Store record
                     new_record = EmissionRecord(
                         user_id=current_user.id,
                         date=date_obj,
@@ -265,7 +268,7 @@ def marketplace():
         MarketplaceListing.user_id != current_user.id
     ).all()
 
-   
+    
     user_listings = MarketplaceListing.query.filter_by(user_id=current_user.id).all()
 
     return render_template("marketplace.html", listings=listings, user_listings=user_listings)
@@ -296,7 +299,7 @@ def create_listing():
             db.session.commit()
 
             flash("Listing created successfully!", "success")
-           
+            
             return redirect(url_for("marketplace"))
 
     return render_template("create_listing.html", message=msg, success=success)
@@ -307,29 +310,29 @@ def create_listing():
 def buy_credits(listing_id):
     listing = MarketplaceListing.query.get_or_404(listing_id)
 
-   
+ 
     if listing.user_id == current_user.id:
         flash("You cannot buy your own listing!", "warning")
         return redirect(url_for("marketplace"))
 
-  
+    
     if listing.status == "sold":
         flash("This listing is already sold!", "danger")
         return redirect(url_for("marketplace"))
 
     seller = User.query.get(listing.user_id)
 
-   
+    
     if current_user.wallet_balance < listing.total_price:
         flash("You don’t have enough balance in your wallet!", "danger")
         return redirect(url_for("marketplace"))
 
     
-    
+ 
     current_user.wallet_balance -= listing.total_price
     current_user.credits += listing.credits
 
-   
+  
     seller.wallet_balance += listing.total_price
 
    
@@ -353,6 +356,8 @@ def buy_credits(listing_id):
         seller=seller
     )
 
+
+
 @app.route('/offset', methods=['GET', 'POST'])
 @login_required
 def offset():
@@ -370,9 +375,10 @@ def offset():
         if user.credits < credits_required:
             message = f"Not enough credits! You need {credits_required:.2f} but have {user.credits:.2f}."
         else:
-            # Deduct credits from user
+           
             user.credits -= credits_required
 
+            
             new_offset = OffsetTransaction(
                 user_id=user.id,
                 program_id=program.id,
@@ -395,7 +401,8 @@ def offset():
 
 
 
-# Logout
+
+
 @app.route("/logout")
 @login_required
 def logout():
