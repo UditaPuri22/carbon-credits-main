@@ -1,19 +1,22 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
+from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, Activity, EmissionRecord,MarketplaceListing,Transaction,OffsetProgram,OffsetTransaction
 from datetime import datetime
 
+from models import (
+    db, User, Activity, EmissionFactor, EmissionRecord,
+    MarketplaceListing, Transaction, OffsetProgram, OffsetTransaction
+)
+
+
+# Flask App Configuration
 app = Flask(__name__)
 app.secret_key = "your_secret_key_here"
-
-
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///carbon_credits.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
-
 
 login_manager = LoginManager(app)
 login_manager.login_view = "home"
@@ -22,30 +25,24 @@ login_manager.login_view = "home"
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-
+# Homepage & Authentication
 @app.route("/")
 def home():
     return render_template("home.html")
-
 
 @app.route("/login", methods=["POST"])
 def login():
     username = request.form["username"]
     password = request.form["password"]
-
     user = User.query.filter_by(username=username).first()
 
     if not user:
-       
         return render_template("home.html", message="User does not exist", open_login=True)
-    elif not check_password_hash(user.password, password):
+    if not check_password_hash(user.password, password):
         return render_template("home.html", message="Invalid username or password", open_login=True)
 
     login_user(user)
     return redirect(url_for("dashboard"))
-
-
-
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -64,26 +61,53 @@ def register():
     login_user(new_user)
     return redirect(url_for("dashboard"))
 
+# Emission Factors (kg CO₂e/unit)
+EMISSION_FACTORS = {
+    # --- Home Energy ---
+    "Electricity Usage": 0.82, "Natural Gas Usage": 1.90, "LPG Usage": 1.55,
+    "Biogas Usage": 0.10, "Heating Oil": 2.70, "Coal Usage": 2.40,
+    "Renewable Energy Purchase": -0.82,
 
+    # --- Transport ---
+    "Car (Petrol) Travel": 0.21, "Car (Diesel) Travel": 0.25,
+    "Motorcycle Travel": 0.07, "Bus Travel": 0.09,
+    "Train Travel": 0.04, "Metro Travel": 0.05,
+    "Flight - Domestic": 0.18, "Flight - International": 0.14,
+    "Electric Vehicle Travel": 0.10, "Bicycle Travel": 0.00,
+
+    # --- Food & Diet ---
+    "Mutton Consumption": 24.0, "Chicken Consumption": 6.9,
+    "Fish Consumption": 5.5, "Dairy Consumption": 1.2,
+    "Vegetarian Diet": 3.5, "Vegan Diet": 2.5,
+
+    # --- Goods & Services ---
+    "Clothing Purchase": 0.005, "Electronics Purchase": 0.008,
+    "Furniture Purchase": 0.006, "Waste Generated": 1.0,
+
+    # --- Offsets ---
+    "Tree Planting": -20, "Carbon Credit Purchase": -1000,
+    "Renewable Energy Support": -500, "Biogas Program Support": -300
+}
+
+# Dashboard with Emission, Marketplace, Offset & Activity History
 @app.route('/dashboard')
 @login_required
 def dashboard():
     user = current_user
 
-    
+    # --- Emission records (by date) ---
     emission_records = (
-    db.session.query(EmissionRecord.date, func.sum(EmissionRecord.emission_value))
-    .filter(EmissionRecord.user_id == user.id)
-    .group_by(EmissionRecord.date)
-    .order_by(EmissionRecord.date.asc())
-    .all()
-)
+        db.session.query(EmissionRecord.date, func.sum(EmissionRecord.emission_value))
+        .filter(EmissionRecord.user_id == user.id)
+        .group_by(EmissionRecord.date)
+        .order_by(EmissionRecord.date.asc())
+        .all()
+    )
     emission_data = [
-        {"date": e[0].strftime("%Y-%m-%d"), "amount": round(e[1], 2)}
-        for e in emission_records
-]
+        {"date": e[0].strftime("%Y-%m-%d"), "amount": round(e[1], 2)} for e in emission_records
+    ]
 
-    
+    # --- Marketplace transactions ---
     marketplace_transactions = (
         db.session.query(Transaction, User.username)
         .join(User, Transaction.seller_id == User.id)
@@ -91,7 +115,6 @@ def dashboard():
         .order_by(Transaction.created_at.desc())
         .all()
     )
-
     marketplace_data = [
         {
             "date": t.Transaction.created_at.strftime("%Y-%m-%d"),
@@ -101,7 +124,7 @@ def dashboard():
         for t in marketplace_transactions
     ]
 
-   
+    # --- Offset transactions ---
     offset_data = (
         db.session.query(OffsetTransaction, OffsetProgram)
         .join(OffsetProgram, OffsetTransaction.program_id == OffsetProgram.id)
@@ -109,7 +132,6 @@ def dashboard():
         .order_by(OffsetTransaction.created_at.desc())
         .all()
     )
-
     offset_transactions = [
         {
             "date": record.OffsetTransaction.created_at.strftime("%Y-%m-%d"),
@@ -120,21 +142,49 @@ def dashboard():
         for record in offset_data
     ]
 
-    
+    # --- Activity History (with date filter) ---
+    filter_date = request.args.get('date')
+    query = Activity.query.filter_by(user_id=user.id)
+    if filter_date:
+        try:
+            date_obj = datetime.strptime(filter_date, "%Y-%m-%d").date()
+            query = query.filter(Activity.date == date_obj)
+        except ValueError:
+            pass
+
+    activities = query.order_by(Activity.date.desc()).all()
+
+    # --- Emission factors ---
+    db_factors = {ef.activity_type: ef.factor for ef in EmissionFactor.query.all()}
+    emission_factors = db_factors if db_factors else EMISSION_FACTORS
+
+    # --- Compute emissions & remaining credits ---
+    activity_data = []
+    remaining_credits = user.credits
+    for act in activities:
+        factor = emission_factors.get(act.activity_type, 0.1)
+        emission = act.amount * factor  # kg CO₂e
+        remaining_credits -= emission / 1000  # convert to tonnes
+        activity_data.append({
+            "date": act.date.strftime("%Y-%m-%d"),
+            "type": act.activity_type,
+            "unit": act.unit,
+            "amount": act.amount,
+            "emission": round(emission, 2),
+            "remaining_credits": round(max(remaining_credits, 0), 2)
+        })
+
     return render_template(
         'dashboard.html',
         user=user,
         emission_data=emission_data,
         marketplace_transactions=marketplace_data,
-        offset_transactions=offset_transactions
+        offset_transactions=offset_transactions,
+        activity_data=activity_data,
+        filter_date=filter_date
     )
 
-
-
-from models import Activity, EmissionFactor, EmissionRecord
-from flask import render_template, request
-from datetime import datetime
-
+# Activity Entry
 @app.route('/activity_entry', methods=['GET', 'POST'])
 @login_required
 def activity_entry():
@@ -148,50 +198,36 @@ def activity_entry():
         date_str = request.form.get('date')
         date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.utcnow().date()
 
-        # Fetch factor
         factor_record = EmissionFactor.query.filter_by(activity_type=activity_type).first()
-        factor = factor_record.factor if factor_record else 0.1
-        emission = amount * factor
+        factor = factor_record.factor if factor_record else EMISSION_FACTORS.get(activity_type, 0.1)
+        emission_value = amount * factor  # kg CO₂e
 
-        current_user.credits -= emission
+        # Update user credits (1 credit = 1 tCO₂e)
+        current_user.credits -= emission_value / 1000
         if current_user.credits < 0:
             current_user.credits = 0
         db.session.add(current_user)
 
-        activity = Activity(
-            user_id=current_user.id,
-            activity_type=activity_type,
-            description=description,
-            amount=amount,
-            unit=unit,
-            date=date
-        )
-        db.session.add(activity)
-
-        emission_record = EmissionRecord(
-            user_id=current_user.id,
-            date=date,
-            emission_value=emission
-        )
-        db.session.add(emission_record)
-
+        # Log activity and emission
+        db.session.add(Activity(user_id=current_user.id, activity_type=activity_type,
+                                description=description, amount=amount, unit=unit, date=date))
+        db.session.add(EmissionRecord(user_id=current_user.id, date=date, emission_value=emission_value))
         db.session.commit()
 
+        msg_action = "emitted" if emission_value >= 0 else "offset"
         message = (
-                f"Activity added for {date.strftime('%Y-%m-%d')}. "
-                f"{emission:.2f} credits deducted. "
-                f"Remaining credits: {current_user.credits:.2f}"
-            )
+            f"Activity '{activity_type}' on {date.strftime('%Y-%m-%d')} recorded. "
+            f"You {msg_action} {abs(emission_value):.2f} kg CO₂e. "
+            f"Remaining credits: {current_user.credits:.2f} tCO₂e."
+        )
 
     return render_template('activity_entry.html', message=message)
 
-
-
+# Emission Calculation (by date)
 @app.route("/emission", methods=["GET", "POST"])
 @login_required
 def emission_calculation():
-    daily_emission = None
-    message = None
+    daily_emission, message = None, None
 
     if request.method == "POST":
         date_str = request.form.get("date")
@@ -199,87 +235,42 @@ def emission_calculation():
             message = "Please select a date."
         else:
             date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
-
-            
-            existing_record = EmissionRecord.query.filter_by(
-                user_id=current_user.id, date=date_obj
-            ).first()
+            existing_record = EmissionRecord.query.filter_by(user_id=current_user.id, date=date_obj).first()
 
             if existing_record:
                 daily_emission = existing_record.emission_value
-                message = (
-                    f"Emission for {date_str} was already calculated: "
-                    f"{daily_emission:.2f} kg CO₂. "
-                    f"Remaining credits: {current_user.credits:.2f}"
-                )
+                message = f"Emission for {date_str} already calculated: {daily_emission:.2f} kg CO₂e."
             else:
-               
-                activities = Activity.query.filter_by(
-                    user_id=current_user.id, date=date_obj
-                ).all()
-
+                activities = Activity.query.filter_by(user_id=current_user.id, date=date_obj).all()
                 if not activities:
                     message = f"No activities found for {date_str}."
                 else:
-                    emission_factors = {
-                        "Car Travel": 0.12,
-                        "Flight": 0.25,
-                        "Electricity Usage": 0.85,
-                    }
-
-                    daily_emission = 0
-                    for act in activities:
-                        factor = emission_factors.get(act.activity_type, 0.1)
-                        daily_emission += float(act.amount) * factor
-
-                    
-                    current_user.credits -= daily_emission
+                    total_emission = sum(a.amount * EMISSION_FACTORS.get(a.activity_type, 0.1) for a in activities)
+                    current_user.credits -= total_emission / 1000
                     if current_user.credits < 0:
                         current_user.credits = 0
                     db.session.add(current_user)
+                    db.session.add(EmissionRecord(user_id=current_user.id, date=date_obj, emission_value=total_emission))
                     db.session.commit()
-
-
-                    # Store record
-                    new_record = EmissionRecord(
-                        user_id=current_user.id,
-                        date=date_obj,
-                        emission_value=daily_emission
-                    )
-                    db.session.add(new_record)
-                    db.session.commit()
-
-                    message = (
-                        f"Emission for {date_str} calculated successfully: "
-                        f"{daily_emission:.2f} kg CO₂. "
-                        f"Remaining credits: {current_user.credits:.2f}"
-                    )
+                    message = f"Emission for {date_str} calculated: {total_emission:.2f} kg CO₂e."
 
     return render_template("emission_calculation.html", message=message, daily_emission=daily_emission)
 
-
-
+# Marketplace
 @app.route("/marketplace")
 @login_required
 def marketplace():
-   
     listings = MarketplaceListing.query.filter(
         MarketplaceListing.status == "available",
         MarketplaceListing.user_id != current_user.id
     ).all()
-
-    
     user_listings = MarketplaceListing.query.filter_by(user_id=current_user.id).all()
-
     return render_template("marketplace.html", listings=listings, user_listings=user_listings)
-
 
 @app.route("/create_listing", methods=["GET", "POST"])
 @login_required
 def create_listing():
-    msg = None
-    success = False
-
+    msg, success = None, False
     if request.method == "POST":
         credits = float(request.form["credits"])
         price_per_credit = float(request.form["price_per_credit"])
@@ -297,67 +288,43 @@ def create_listing():
             current_user.credits -= credits
             db.session.add(listing)
             db.session.commit()
-
             flash("Listing created successfully!", "success")
-            
             return redirect(url_for("marketplace"))
-
     return render_template("create_listing.html", message=msg, success=success)
-
 
 @app.route("/buy/<int:listing_id>", methods=["POST"])
 @login_required
 def buy_credits(listing_id):
     listing = MarketplaceListing.query.get_or_404(listing_id)
 
- 
     if listing.user_id == current_user.id:
         flash("You cannot buy your own listing!", "warning")
         return redirect(url_for("marketplace"))
-
-    
     if listing.status == "sold":
         flash("This listing is already sold!", "danger")
         return redirect(url_for("marketplace"))
 
     seller = User.query.get(listing.user_id)
-
-    
     if current_user.wallet_balance < listing.total_price:
         flash("You don’t have enough balance in your wallet!", "danger")
         return redirect(url_for("marketplace"))
 
-    
- 
     current_user.wallet_balance -= listing.total_price
     current_user.credits += listing.credits
-
-  
     seller.wallet_balance += listing.total_price
-
-   
     listing.status = "sold"
 
-   
-    transaction = Transaction(
+    db.session.add(Transaction(
         buyer_id=current_user.id,
         seller_id=seller.id,
         credits_transferred=listing.credits,
         total_amount=listing.total_price,
-    )
-
-    db.session.add(transaction)
+    ))
     db.session.commit()
 
-    return render_template(
-        "purchase_success.html",
-        listing=listing,
-        buyer=current_user,
-        seller=seller
-    )
+    return render_template("purchase_success.html", listing=listing, buyer=current_user, seller=seller)
 
-
-
+# Offset Programs
 @app.route('/offset', methods=['GET', 'POST'])
 @login_required
 def offset():
@@ -371,24 +338,16 @@ def offset():
         program = OffsetProgram.query.get(program_id)
 
         credits_required = program.rate_per_kg * co2_amount
-
         if user.credits < credits_required:
             message = f"Not enough credits! You need {credits_required:.2f} but have {user.credits:.2f}."
         else:
-           
             user.credits -= credits_required
-
-            
-            new_offset = OffsetTransaction(
-                user_id=user.id,
-                program_id=program.id,
-                co2_offset=co2_amount,
-                credits_used=credits_required,
+            db.session.add(OffsetTransaction(
+                user_id=user.id, program_id=program.id,
+                co2_offset=co2_amount, credits_used=credits_required,
                 created_at=datetime.utcnow()
-            )
-            db.session.add(new_offset)
+            ))
             db.session.commit()
-
             message = (
                 f"Successfully offset {co2_amount:.2f} kg CO₂ via {program.name}. "
                 f"{credits_required:.2f} credits deducted. "
@@ -397,12 +356,7 @@ def offset():
 
     return render_template('offset.html', programs=programs, message=message, user=user)
 
-
-
-
-
-
-
+# Logout
 @app.route("/logout")
 @login_required
 def logout():
@@ -410,36 +364,17 @@ def logout():
     flash("You’ve been logged out successfully.", "info")
     return redirect(url_for("home"))
 
-
-
-
+# Initialization
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
         if OffsetProgram.query.count() == 0:
             programs = [
-                OffsetProgram(
-                    name="Tree Plantation Drive",
-                    description="Funds planting of new trees.",
-                    rate_per_kg=0.5,
-                    image="trees.jpg"
-                ),
-                OffsetProgram(
-                    name="Renewable Energy Project",
-                    description="Invests in solar/wind energy.",
-                    rate_per_kg=0.8,
-                    image="renewable.jpg"
-                ),
-                OffsetProgram(
-                    name="Ocean Cleanup Program",
-                    description="Supports ocean plastic cleanup.",
-                    rate_per_kg=1.0,
-                    image="ocean.jpg"
-                )
+                OffsetProgram(name="Tree Plantation Drive", description="Funds planting of new trees.", rate_per_kg=0.5, image="trees.jpg"),
+                OffsetProgram(name="Renewable Energy Project", description="Invests in solar/wind energy.", rate_per_kg=0.8, image="renewable.jpg"),
+                OffsetProgram(name="Ocean Cleanup Program", description="Supports ocean plastic cleanup.", rate_per_kg=1.0, image="ocean.jpg")
             ]
             db.session.add_all(programs)
             db.session.commit()
-            print(" Default offset programs added.")
+            print("Default offset programs added.")
     app.run(debug=True)
-    
-
