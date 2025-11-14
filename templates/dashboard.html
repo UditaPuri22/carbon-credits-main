@@ -20,7 +20,7 @@
             <div class="card shadow-sm border-0 p-4">
                 <h4 class="fw-bold text-success">👤 Profile Overview</h4>
                 <p><strong>Wallet Balance:</strong> ₹{{ "%.2f"|format(user.wallet_balance) }}</p>
-                <p><strong>Carbon Credits:</strong> {{ "%.2f"|format(user.credits) }}</p>
+                <p><strong>Carbon Credits:</strong> {{ "%.2f"|format(user.credits) }} tCO₂e</p>
             </div>
         </section>
 
@@ -98,6 +98,54 @@
                 {% endif %}
             </div>
         </section>
+
+
+        <section class="table-section mb-5">
+            <div class="card shadow-sm border-0 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold text-success mb-0">🕓 Activity History</h4>
+                    <form method="GET" action="{{ url_for('dashboard') }}" class="d-flex align-items-center">
+                        <input type="date" name="date" class="form-control me-2" value="{{ filter_date or '' }}">
+                        <button type="submit" class="btn btn-outline-success">Filter</button>
+                        {% if filter_date %}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary ms-2">Clear</a>
+                        {% endif %}
+                    </form>
+                </div>
+
+                {% if activity_data %}
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-success">
+                            <tr>
+                                <th>Date</th>
+                                <th>Activity Type</th>
+                                <th>Unit</th>
+                                <th>Amount</th>
+                                <th>Emission (kg CO₂e)</th>
+                                <th>Remaining Credits (tCO₂e)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in activity_data %}
+                            <tr>
+                                <td>{{ a.date }}</td>
+                                <td>{{ a.type }}</td>
+                                <td>{{ a.unit }}</td>
+                                <td>{{ a.amount }}</td>
+                                <td>{{ a.emission }}</td>
+                                <td>{{ a.remaining_credits }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    <p class="text-muted">No activity records found{% if filter_date %} for {{ filter_date }}{% endif %}.</p>
+                {% endif %}
+            </div>
+        </section>
+
     </div>
 </div>
 
