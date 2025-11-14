@@ -32,6 +32,9 @@ class Activity(db.Model):
     unit = db.Column(db.String(50), nullable=False)
     date = db.Column(db.Date, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    #emission = db.Column(db.Float, nullable=True)           # store emission result (kg CO₂e)
+    #remaining_credits = db.Column(db.Float, nullable=True)  # for dashboard consistency
+    
     
 class EmissionRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
