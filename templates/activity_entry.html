@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
-    <!-- Breadcrumb -->
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
@@ -29,7 +28,6 @@
                     <select name="activity_type" id="activity_type" class="form-select" required>
                         <option value="">Select an activity</option>
 
-                        <!-- 🏠 Home Energy -->
                         <optgroup label="Home Energy">
                             <option value="Electricity Usage">Electricity Usage</option>
                             <option value="Natural Gas Usage">Natural Gas Usage</option>
@@ -40,7 +38,6 @@
                             <option value="Renewable Energy Purchase">Renewable Energy Purchase</option>
                         </optgroup>
 
-                        <!-- 🚗 Transport -->
                         <optgroup label="Transport">
                             <option value="Car (Petrol) Travel">Car (Petrol) Travel</option>
                             <option value="Car (Diesel) Travel">Car (Diesel) Travel</option>
@@ -54,7 +51,6 @@
                             <option value="Bicycle Travel">Bicycle Travel</option>
                         </optgroup>
 
-                        <!-- 🍽️ Food & Diet -->
                         <optgroup label="Food & Diet">
                             <option value="Mutton Consumption">Mutton Consumption</option>
                             <option value="Chicken Consumption">Chicken Consumption</option>
@@ -64,7 +60,6 @@
                             <option value="Vegan Diet">Vegan Diet (per day)</option>
                         </optgroup>
 
-                        <!-- 🛍️ Goods & Services -->
                         <optgroup label="Goods & Services">
                             <option value="Clothing Purchase">Clothing Purchase</option>
                             <option value="Electronics Purchase">Electronics Purchase</option>
@@ -72,7 +67,6 @@
                             <option value="Waste Generated">Waste Generated</option>
                         </optgroup>
 
-                        <!-- 🌱 Offsets & Credits -->
                         <optgroup label="Offsets & Credits">
                             <option value="Tree Planting">Tree Planting</option>
                             <option value="Carbon Credit Purchase">Carbon Credit Purchase</option>
@@ -82,7 +76,6 @@
                     </select>
                 </div>
 
-                <!-- Amount & Unit -->
                 <div class="col-md-6">
                     <label for="amount" class="form-label">Amount</label>
                     <input type="number" step="0.01" name="amount" id="amount" class="form-control" placeholder="e.g. 20" required>
@@ -105,7 +98,6 @@
                 </div>
 
 
-        <!-- Date & Description -->
         <div class="col-md-6">
             <label for="date" class="form-label">Date</label>
             <input type="date" name="date" id="date" class="form-control" required>
@@ -116,7 +108,6 @@
             <textarea name="description" id="description" class="form-control" rows="2" placeholder="Add any details, e.g., flight route or type of meat."></textarea>
         </div>
 
-        <!-- Submit -->
         <div class="col-12 text-end">
             <button type="submit" class="btn btn-success px-4">Save Activity</button>
         </div>
