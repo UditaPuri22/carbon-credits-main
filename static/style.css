@@ -293,3 +293,43 @@ ss
   transform: translateY(-5px);
   box-shadow: 0 6px 16px rgba(0,0,0,0.15);
 }
+
+.activity-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    margin-top: 40px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    
+}
+
+.activity-table th, .activity-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+}
+
+.activity-table th {
+    background: #4CAF50;
+    color: #fff;
+    font-weight: 600;
+    border: black;
+}
+
+.activity-table tbody tr:hover {
+    background: #f1f8f4;
+}
+
+.activity-table .no-data {
+    text-align: center;
+    padding: 15px;
+    color: #777;
+}
+
+.activity-table {
+    margin-bottom: 20px;
+}
+
+
