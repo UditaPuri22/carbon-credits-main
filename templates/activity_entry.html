@@ -16,12 +16,7 @@
     {% endif %}
 
     <form method="POST" action="{{ url_for('activity_entry') }}" class="row g-3 shadow p-4 rounded bg-light">
-
-        <div class="col-md-6">
-            <label for="activity_type" class="form-label">Activity Type</label>
-            <select name="activity_type" id="activity_type" class="form-select" required>
-                <option value="">Select an activity</option>
-
+                
               <!-- Activity Type -->
                 <div class="col-md-6">
                     <label for="activity_type" class="form-label">Activity Type</label>
@@ -111,6 +106,7 @@
         <div class="col-12 text-end">
             <button type="submit" class="btn btn-success px-4">Save Activity</button>
         </div>
+        
     </form>
 </div>
 {% endblock %}
