@@ -11,37 +11,101 @@
 
     <h2 class="mb-4 text-success">Log a New Activity</h2>
     {% if message %}
-  <div class="alert alert-success" role="alert">
-    {{ message }}
-  </div>
-  {% endif %}
+    <div class="alert alert-success" role="alert">
+        {{ message }}
+    </div>
+    {% endif %}
+
     <form method="POST" action="{{ url_for('activity_entry') }}" class="row g-3 shadow p-4 rounded bg-light">
+
         <div class="col-md-6">
             <label for="activity_type" class="form-label">Activity Type</label>
             <select name="activity_type" id="activity_type" class="form-select" required>
                 <option value="">Select an activity</option>
-                <option value="Car Travel">Car Travel</option>
-                <option value="Flight">Flight</option>
-                <option value="Electricity Usage">Electricity Usage</option>
-                <option value="Public Transport">Public Transport</option>
-            </select>
-        </div>
 
-        <div class="col-md-6">
-            <label for="amount" class="form-label">Amount</label>
-            <input type="number" step="0.01" name="amount" id="amount" class="form-control" placeholder="e.g. 20" required>
-        </div>
+              <!-- Activity Type -->
+                <div class="col-md-6">
+                    <label for="activity_type" class="form-label">Activity Type</label>
+                    <select name="activity_type" id="activity_type" class="form-select" required>
+                        <option value="">Select an activity</option>
 
-        <div class="col-md-6">
-            <label for="unit" class="form-label">Unit</label>
-            <select name="unit" id="unit" class="form-select" required>
-                <option value="km">km</option>
-                <option value="kWh">kWh</option>
-                <option value="trees">trees</option>
-                <option value="liters">liters</option>
-            </select>
-        </div>
+                        <!-- 🏠 Home Energy -->
+                        <optgroup label="Home Energy">
+                            <option value="Electricity Usage">Electricity Usage</option>
+                            <option value="Natural Gas Usage">Natural Gas Usage</option>
+                            <option value="LPG Usage">LPG Usage</option>
+                            <option value="Biogas Usage">Biogas Usage</option>
+                            <option value="Heating Oil">Heating Oil</option>
+                            <option value="Coal Usage">Coal Usage</option>
+                            <option value="Renewable Energy Purchase">Renewable Energy Purchase</option>
+                        </optgroup>
 
+                        <!-- 🚗 Transport -->
+                        <optgroup label="Transport">
+                            <option value="Car (Petrol) Travel">Car (Petrol) Travel</option>
+                            <option value="Car (Diesel) Travel">Car (Diesel) Travel</option>
+                            <option value="Motorcycle Travel">Motorcycle Travel</option>
+                            <option value="Bus Travel">Bus Travel</option>
+                            <option value="Train Travel">Train Travel</option>
+                            <option value="Metro Travel">Metro Travel</option>
+                            <option value="Flight - Domestic">Flight - Domestic</option>
+                            <option value="Flight - International">Flight - International</option>
+                            <option value="Electric Vehicle Travel">Electric Vehicle Travel</option>
+                            <option value="Bicycle Travel">Bicycle Travel</option>
+                        </optgroup>
+
+                        <!-- 🍽️ Food & Diet -->
+                        <optgroup label="Food & Diet">
+                            <option value="Mutton Consumption">Mutton Consumption</option>
+                            <option value="Chicken Consumption">Chicken Consumption</option>
+                            <option value="Fish Consumption">Fish Consumption</option>
+                            <option value="Dairy Consumption">Dairy Consumption</option>
+                            <option value="Vegetarian Diet">Vegetarian Diet (per day)</option>
+                            <option value="Vegan Diet">Vegan Diet (per day)</option>
+                        </optgroup>
+
+                        <!-- 🛍️ Goods & Services -->
+                        <optgroup label="Goods & Services">
+                            <option value="Clothing Purchase">Clothing Purchase</option>
+                            <option value="Electronics Purchase">Electronics Purchase</option>
+                            <option value="Furniture Purchase">Furniture Purchase</option>
+                            <option value="Waste Generated">Waste Generated</option>
+                        </optgroup>
+
+                        <!-- 🌱 Offsets & Credits -->
+                        <optgroup label="Offsets & Credits">
+                            <option value="Tree Planting">Tree Planting</option>
+                            <option value="Carbon Credit Purchase">Carbon Credit Purchase</option>
+                            <option value="Renewable Energy Support">Renewable Energy Support</option>
+                            <option value="Biogas Program Support">Biogas Program Support</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- Amount & Unit -->
+                <div class="col-md-6">
+                    <label for="amount" class="form-label">Amount</label>
+                    <input type="number" step="0.01" name="amount" id="amount" class="form-control" placeholder="e.g. 20" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="unit" class="form-label">Unit</label>
+                    <select name="unit" id="unit" class="form-select" required>
+                        <option value="">Select unit</option>
+                        <option value="kWh">kWh (electricity)</option>
+                        <option value="m3">m³ (gas/biogas)</option>
+                        <option value="liters">liters (fuel/oil)</option>
+                        <option value="kg">kg (food/waste)</option>
+                        <option value="km">km (travel distance)</option>
+                        <option value="INR">₹ (INR spent)</option>
+                        <option value="trees">trees (planted)</option>
+                        <option value="credits">carbon credits</option>
+                        <option value="tCO2e">tCO₂e (tonnes of offset)</option>
+                    </select>
+                </div>
+
+
+        <!-- Date & Description -->
         <div class="col-md-6">
             <label for="date" class="form-label">Date</label>
             <input type="date" name="date" id="date" class="form-control" required>
@@ -49,9 +113,10 @@
 
         <div class="col-12">
             <label for="description" class="form-label">Description (optional)</label>
-            <textarea name="description" id="description" class="form-control" rows="2"></textarea>
+            <textarea name="description" id="description" class="form-control" rows="2" placeholder="Add any details, e.g., flight route or type of meat."></textarea>
         </div>
 
+        <!-- Submit -->
         <div class="col-12 text-end">
             <button type="submit" class="btn btn-success px-4">Save Activity</button>
         </div>
