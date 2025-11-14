@@ -191,39 +191,71 @@ def activity_entry():
     message = None
 
     if request.method == 'POST':
-        activity_type = request.form.get('activity_type')
-        description = request.form.get('description')
-        amount = float(request.form.get('amount'))
-        unit = request.form.get('unit')
-        date_str = request.form.get('date')
-        date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.utcnow().date()
 
-        factor_record = EmissionFactor.query.filter_by(activity_type=activity_type).first()
-        factor = factor_record.factor if factor_record else EMISSION_FACTORS.get(activity_type, 0.1)
-        emission_value = amount * factor  # kg CO₂e
+        # Get lists for all fields
+        activity_types = request.form.getlist('activity_type[]')
+        descriptions = request.form.getlist('description[]')
+        amounts = request.form.getlist('amount[]')
+        units = request.form.getlist('unit[]')
+        dates = request.form.getlist('date[]')
 
-        # Update user credits (1 credit = 1 tCO₂e)
-        current_user.credits -= emission_value / 1000
-        if current_user.credits < 0:
-            current_user.credits = 0
-        db.session.add(current_user)
+        total_emission = 0  # to show combined summary
 
-        # Log activity and emission
-        db.session.add(Activity(user_id=current_user.id, activity_type=activity_type,
-                                description=description, amount=amount, unit=unit, date=date))
-        db.session.add(EmissionRecord(user_id=current_user.id, date=date, emission_value=emission_value))
+        for i in range(len(activity_types)):
+            if not activity_types[i].strip():
+                continue  # skip empty rows
+
+            activity_type = activity_types[i]
+            description = descriptions[i]
+            amount = float(amounts[i])
+            unit = units[i]
+
+            # Parse date
+            date_str = dates[i]
+            date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.utcnow().date()
+
+            # Get emission factor
+            factor_record = EmissionFactor.query.filter_by(activity_type=activity_type).first()
+            factor = factor_record.factor if factor_record else EMISSION_FACTORS.get(activity_type, 0.1)
+
+            # Emission calculation
+            emission_value = amount * factor  # kg CO2e
+            total_emission += emission_value
+
+            # Update user credits
+            current_user.credits -= emission_value / 1000  # convert to tCO2e
+            if current_user.credits < 0:
+                current_user.credits = 0
+            db.session.add(current_user)
+
+            # Log activity
+            db.session.add(Activity(
+                user_id=current_user.id,
+                activity_type=activity_type,
+                description=description,
+                amount=amount,
+                unit=unit,
+                date=date
+            ))
+
+            # Log emission
+            db.session.add(EmissionRecord(
+                user_id=current_user.id,
+                date=date,
+                emission_value=emission_value
+            ))
+
         db.session.commit()
 
-        msg_action = "emitted" if emission_value >= 0 else "offset"
         message = (
-            f"Activity '{activity_type}' on {date.strftime('%Y-%m-%d')} recorded. "
-            f"You {msg_action} {abs(emission_value):.2f} kg CO₂e. "
+            f"Successfully saved {len(activity_types)} activities. "
+            f"Total emissions: {total_emission:.2f} kg CO₂e. "
             f"Remaining credits: {current_user.credits:.2f} tCO₂e."
         )
 
     return render_template('activity_entry.html', message=message)
 
-# Emission Calculation (by date)
+
 @app.route("/emission", methods=["GET", "POST"])
 @login_required
 def emission_calculation():
@@ -231,30 +263,57 @@ def emission_calculation():
 
     if request.method == "POST":
         date_str = request.form.get("date")
+
         if not date_str:
             message = "Please select a date."
         else:
             date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+
+            # Check if a record already exists for the day
             existing_record = EmissionRecord.query.filter_by(user_id=current_user.id, date=date_obj).first()
 
             if existing_record:
                 daily_emission = existing_record.emission_value
                 message = f"Emission for {date_str} already calculated: {daily_emission:.2f} kg CO₂e."
             else:
+                # Fetch activities for that date
                 activities = Activity.query.filter_by(user_id=current_user.id, date=date_obj).all()
+
                 if not activities:
                     message = f"No activities found for {date_str}."
                 else:
-                    total_emission = sum(a.amount * EMISSION_FACTORS.get(a.activity_type, 0.1) for a in activities)
-                    current_user.credits -= total_emission / 1000
+                    total_emission = 0
+
+                    for a in activities:
+                        # Use DB emission factor if available
+                        factor_record = EmissionFactor.query.filter_by(activity_type=a.activity_type).first()
+                        factor = factor_record.factor if factor_record else EMISSION_FACTORS.get(a.activity_type, 0.1)
+
+                        # Calculate activity's emission
+                        emission_value = a.amount * factor    # kg CO₂e
+
+                        total_emission += emission_value
+
+                    # Update user credits
+                    current_user.credits -= total_emission / 1000  # convert kg to tons
                     if current_user.credits < 0:
                         current_user.credits = 0
                     db.session.add(current_user)
-                    db.session.add(EmissionRecord(user_id=current_user.id, date=date_obj, emission_value=total_emission))
+
+                    # Save daily emission record
+                    db.session.add(EmissionRecord(
+                        user_id=current_user.id,
+                        date=date_obj,
+                        emission_value=total_emission
+                    ))
+
                     db.session.commit()
+
                     message = f"Emission for {date_str} calculated: {total_emission:.2f} kg CO₂e."
+                    daily_emission = total_emission
 
     return render_template("emission_calculation.html", message=message, daily_emission=daily_emission)
+
 
 # Marketplace
 @app.route("/marketplace")
