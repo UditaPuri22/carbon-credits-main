@@ -9,8 +9,14 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    credits = db.Column(db.Float, default=1000.0)  
-    wallet_balance = db.Column(db.Float, default=5000.0)
+    credits = db.Column(db.Float, default=5.0)           # in tCO₂e
+    wallet_balance = db.Column(db.Float, default=5000.0) # in ₹ (INR)
+
+
+    activities = db.relationship("Activity", backref="user", lazy=True)
+    emission_records = db.relationship("EmissionRecord", backref="user", lazy=True)
+    offset_transactions = db.relationship("OffsetTransaction", backref="user", lazy=True)
+    listings = db.relationship("MarketplaceListing", backref="user", lazy=True)
 
 class EmissionFactor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -26,8 +32,6 @@ class Activity(db.Model):
     unit = db.Column(db.String(50), nullable=False)
     date = db.Column(db.Date, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    user = db.relationship("User", backref=db.backref("activities", lazy=True))
     
 class EmissionRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -43,9 +47,6 @@ class MarketplaceListing(db.Model):
     total_price = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), default="available")  # available / sold
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    user = db.relationship("User", backref="listings", lazy=True)
-
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -75,6 +76,5 @@ class OffsetTransaction(db.Model):
     credits_used = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    user = db.relationship("User", backref="offset_transactions")
     program = db.relationship("OffsetProgram", backref="transactions")
 
