@@ -68,7 +68,6 @@
                             
                             <optgroup label="Offsets & Credits">
                                  <option>Tree Planting</option>
-                                <option>Carbon Credit Purchase</option>
                                 <option>Renewable Energy Support</option>
                                 <option>Biogas Program Support</option>
                             </optgroup>
@@ -116,10 +115,15 @@
 document.getElementById("addRow").addEventListener("click", function () {
     let table = document.getElementById("activityTable").getElementsByTagName("tbody")[0];
     let newRow = table.rows[0].cloneNode(true);
+    newRow.querySelectorAll("input").forEach(i => {
+        if (i.type !== "date") {
+            i.value = "";
+        }
+    });
 
-    // Clear input values
-    newRow.querySelectorAll("input").forEach(i => i.value = "");
-    newRow.querySelector("select").value = "";
+    newRow.querySelectorAll("select").forEach(s => s.value = "");
+    let firstDate = table.rows[0].querySelector('input[type="date"]').value;
+    newRow.querySelector('input[type="date"]').value = firstDate;
 
     table.appendChild(newRow);
 });
@@ -128,13 +132,12 @@ document.getElementById("addRow").addEventListener("click", function () {
 document.addEventListener("click", function (e) {
     if (e.target.classList.contains("removeRow")) {
         let rows = document.querySelectorAll("#activityTable tbody tr");
-
-        // Prevent removing the last row
         if (rows.length > 1) {
             e.target.closest("tr").remove();
         }
     }
 });
 </script>
+
 
 {% endblock %}
