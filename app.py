@@ -171,7 +171,7 @@ def dashboard():
             "unit": act.unit,
             "amount": act.amount,
             "emission": round(emission, 2),
-            "remaining_credits": round(max(remaining_credits, 0), 2)
+            "remaining_credits": round(remaining_credits, 3)
         })
 
     return render_template(
@@ -247,11 +247,11 @@ def activity_entry():
 
         db.session.commit()
 
-        message = (
+        '''message = (
             f"Successfully saved {len(activity_types)} activities. "
             f"Total emissions: {total_emission:.2f} kg CO₂e. "
             f"Remaining credits: {current_user.credits:.2f} tCO₂e."
-        )
+        )'''
 
     return render_template('activity_entry.html', message=message)
 
@@ -259,58 +259,41 @@ def activity_entry():
 @app.route("/emission", methods=["GET", "POST"])
 @login_required
 def emission_calculation():
-    daily_emission, message = None, None
+    daily_emission = None
+    message = None
 
     if request.method == "POST":
         date_str = request.form.get("date")
 
         if not date_str:
             message = "Please select a date."
-        else:
-            date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+            return render_template("emission.html", message=message)
 
-            # Check if a record already exists for the day
-            existing_record = EmissionRecord.query.filter_by(user_id=current_user.id, date=date_obj).first()
+        # Convert input text → date
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
 
-            if existing_record:
-                daily_emission = existing_record.emission_value
-                message = f"Emission for {date_str} already calculated: {daily_emission:.2f} kg CO₂e."
-            else:
-                # Fetch activities for that date
-                activities = Activity.query.filter_by(user_id=current_user.id, date=date_obj).all()
+        # Fetch all activites of that date
+        activities = Activity.query.filter_by( user_id=current_user.id, date=date_obj).all()
 
-                if not activities:
-                    message = f"No activities found for {date_str}."
-                else:
-                    total_emission = 0
+        if not activities:
+            message = f"No activities found for {date_str}."
+            return render_template("emission.html", message=message)
 
-                    for a in activities:
-                        # Use DB emission factor if available
-                        factor_record = EmissionFactor.query.filter_by(activity_type=a.activity_type).first()
-                        factor = factor_record.factor if factor_record else EMISSION_FACTORS.get(a.activity_type, 0.1)
+        # Compute the total emissions
+        total_emission = 0.0
+        for a in activities:
+            factor_record = EmissionFactor.query.filter_by( activity_type=a.activity_type).first()
+            factor = factor_record.factor if factor_record else EMISSION_FACTORS.get(a.activity_type, 0)
 
-                        # Calculate activity's emission
-                        emission_value = a.amount * factor    # kg CO₂e
+            total_emission += a.amount * factor
 
-                        total_emission += emission_value
+        # Save emission record for the day
+        record = EmissionRecord( user_id=current_user.id, date=date_obj, emission_value=total_emission)
+        db.session.add(record)
+        db.session.commit()
 
-                    # Update user credits
-                    current_user.credits -= total_emission / 1000  # convert kg to tons
-                    if current_user.credits < 0:
-                        current_user.credits = 0
-                    db.session.add(current_user)
-
-                    # Save daily emission record
-                    db.session.add(EmissionRecord(
-                        user_id=current_user.id,
-                        date=date_obj,
-                        emission_value=total_emission
-                    ))
-
-                    db.session.commit()
-
-                    message = f"Emission for {date_str} calculated: {total_emission:.2f} kg CO₂e."
-                    daily_emission = total_emission
+        message = ( f"Total emission for {date_str}: {total_emission:.3f} kg CO₂e.")
+        daily_emission = total_emission
 
     return render_template("emission_calculation.html", message=message, daily_emission=daily_emission)
 
