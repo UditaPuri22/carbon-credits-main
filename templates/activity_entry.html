@@ -5,7 +5,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Activity Entry (Multiple)</li>
+            <li class="breadcrumb-item active" aria-current="page">Activity Entry</li>
         </ol>
     </nav>
 
@@ -13,7 +13,7 @@
 
     <form method="POST" action="{{ url_for('activity_entry') }}" id="activityForm">
 
-        <table class="activity-table">
+        <table class="activity-table" id="activityTable">
             <thead>
                 <tr>
                     <th>Activity Type</th>
@@ -65,13 +65,12 @@
                                 <option>Furniture Purchase</option>
                                 <option>Waste Generated</option>
                             </optgroup>
-                            
-                            <optgroup label="Offsets & Credits">
+
+                            <optgroup label="Offsets">
                                  <option>Tree Planting</option>
                                 <option>Renewable Energy Support</option>
                                 <option>Biogas Program Support</option>
                             </optgroup>
-                            
                         </select>
                     </td>
 
@@ -87,7 +86,7 @@
                             <option>km</option>
                             <option>INR</option>
                             <option>trees</option>
-                            <option>credits</option>
+                            <option>unit</option>
                         </select>
                     </td>
 
@@ -115,13 +114,17 @@
 document.getElementById("addRow").addEventListener("click", function () {
     let table = document.getElementById("activityTable").getElementsByTagName("tbody")[0];
     let newRow = table.rows[0].cloneNode(true);
+
+    // Clear inputs except date
     newRow.querySelectorAll("input").forEach(i => {
         if (i.type !== "date") {
             i.value = "";
         }
     });
 
+    // Clear selects
     newRow.querySelectorAll("select").forEach(s => s.value = "");
+    // Copy date from first row
     let firstDate = table.rows[0].querySelector('input[type="date"]').value;
     newRow.querySelector('input[type="date"]').value = firstDate;
 
@@ -132,6 +135,8 @@ document.getElementById("addRow").addEventListener("click", function () {
 document.addEventListener("click", function (e) {
     if (e.target.classList.contains("removeRow")) {
         let rows = document.querySelectorAll("#activityTable tbody tr");
+
+        // Prevent removing the last row
         if (rows.length > 1) {
             e.target.closest("tr").remove();
         }
