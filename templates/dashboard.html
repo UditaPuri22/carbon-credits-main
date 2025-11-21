@@ -20,7 +20,7 @@
             <div class="card shadow-sm border-0 p-4">
                 <h4 class="fw-bold text-success">👤 Profile Overview</h4>
                 <p><strong>Wallet Balance:</strong> ₹{{ "%.2f"|format(user.wallet_balance) }}</p>
-                <p><strong>Carbon Credits:</strong> {{ "%.2f"|format(user.credits) }} tCO₂e</p>
+                <p><strong>Carbon Credits:</strong> {{ "%.3f"|format(user.credits) }} tCO₂e</p>
             </div>
         </section>
 
@@ -123,6 +123,7 @@
                                 <th>Unit</th>
                                 <th>Amount</th>
                                 <th>Emission (kg CO₂e)</th>
+                                <th>Remaining Credits (tCO₂e)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -133,6 +134,7 @@
                                 <td>{{ a.unit }}</td>
                                 <td>{{ a.amount }}</td>
                                 <td>{{ a.emission }}</td>
+                                <td>{{ a.remaining_credits }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
